@@ -80,3 +80,30 @@ def agrupar_por_cliente(pedidos: list[Pedido]) -> dict[str, list[Pedido]]:
 
 def pedidos_abiertos(pedidos: list[Pedido]) -> list[Pedido]:
     return [p for p in pedidos if not p.esta_cerrado()]
+
+def priorizar_despacho(pedido: Pedido, umbral_valor_alto: float = 500.0) -> str:
+    """Calcula la prioridad de despacho de un pedido segun su estado y monto."""
+    if pedido.esta_cerrado():
+        return "sin_prioridad"
+
+    dias_desde_creacion = (datetime.now() - pedido.creado_en).days
+    total = pedido.total()
+    unidades = pedido.unidades()
+
+    if pedido.estado is Estado.DESPACHADO:
+        prioridad = "en_transito"
+    elif total >= umbral_valor_alto and dias_desde_creacion >= 2:
+        prioridad = "urgente"
+    elif total >= umbral_valor_alto:
+        prioridad = "alta"
+    elif unidades >= 10 and dias_desde_creacion >= 3:
+        prioridad = "alta"
+    elif dias_desde_creacion >= 5:
+        prioridad = "media"
+    else:
+        prioridad = "baja"
+
+    if pedido.estado is Estado.PREPARADO and prioridad == "baja":
+        prioridad = "media"
+
+    return prioridad
